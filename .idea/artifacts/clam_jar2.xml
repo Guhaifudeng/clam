@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="clam:jar2">
+    <output-path>$PROJECT_DIR$/out/end3</output-path>
+    <root id="root">
+      <element id="archive" name="clam.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/src/tt/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="clam" />
+        <element id="module-test-output" name="clam" />
+      </element>
+      <element id="library" level="project" name="fig" />
+    </root>
+  </artifact>
+</component>

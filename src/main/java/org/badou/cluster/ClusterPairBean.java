@@ -1,3 +1,5 @@
+package org.badou.cluster;
+
 /**
  * Created by yishuihan on 17-7-29.
  */

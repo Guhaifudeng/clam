@@ -1,7 +1,11 @@
+package org.badou.cluster;
+
 import fig.basic.Pair;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by yishuihan on 17-7-29.
@@ -10,23 +14,36 @@ public class ThreadDealt2 implements Runnable{
     private ConcurrentLinkedQueue<ClusterPairBean> out2_queue = null;
     private PriorityBlockingQueue<ClusterPairBean> out_queue = null;
     private boolean in_finished = false;
-    private volatile boolean out_finished = false;
+    private boolean out_finished =  true;
     private ConcurrentLinkedQueue<Pair<ClusterBean,ClusterBean>> in_queue = null;
     private ChameleonTool chameleonTool = null;
-    TemMess temMess = null;
+    private ReadWriteLock rwl = null;
+    private TemMess temMess = null;
     public ThreadDealt2(PriorityBlockingQueue<ClusterPairBean> out_queue, ConcurrentLinkedQueue<ClusterPairBean> out2_queue, ConcurrentLinkedQueue<Pair<ClusterBean,ClusterBean>> in_queue,
-                        ChameleonTool chameleonTool, TemMess temMess){
+                        ChameleonTool chameleonTool, TemMess temMess, ReentrantReadWriteLock rwl ){
         this.temMess = temMess;
         this.out_queue = out_queue;
         this.out2_queue = out2_queue;
         this.in_queue = in_queue;
         this.chameleonTool = chameleonTool;
         in_finished = false;
+        this.rwl = rwl;
 
     }
     private Double minMetric = 0.0;
+
+    public Integer getIndex() {
+        return index;
+    }
+
+    public void setIndex(Integer index) {
+        this.index = index;
+    }
+
     private Double min_RC = 0.0;
     private Double min_RI = 0.0;
+    private Integer index = 0;
+
     public void setThrehold(Double minMetric,Double min_RC,Double min_RI){
         this.minMetric = minMetric;
         this.min_RC = min_RC;
@@ -35,26 +52,35 @@ public class ThreadDealt2 implements Runnable{
     public void setIn_finished(boolean in_finished) {
         this.in_finished = in_finished;
     }
-    public synchronized boolean getOut_finished(){
+    public  boolean getOut_finished(){
         return  this.out_finished;
     }
-    public synchronized void setOut_finished(boolean out_finished) {
+    public  void setOut_finished(boolean out_finished) {
         this.out_finished = out_finished;
     }
 
     private int mustTwo = 0;
     public void run() {
         while (in_finished == false) {
-
-            mustTwo++;
             while (!in_queue.isEmpty()) {
-                mustTwo = 0;
+
+                this.rwl.readLock().lock();
                 Pair <ClusterBean, ClusterBean> pair = in_queue.poll();
-                if (pair == null)
+                if (pair == null){
+                    this.rwl.readLock().unlock();
                     continue;
+
+                }
                 this.setOut_finished(false);
                 ClusterBean c1 = pair.getFirst();
                 ClusterBean cluster = pair.getSecond();
+                if (c1.getPointSize() == 0 && cluster.getPointSize() == 0){
+                    System.err.println("c1-cluster " +index);
+                }else if (cluster.getPointSize()==0){
+                    System.err.println("cluster "+index);
+                }else if (c1.getPointSize() == 0){
+                    System.err.println("c1 "+ index);
+                }
                 Pair<Double,Integer> pair1 = chameleonTool.calSEC(c1, cluster);
                 Double t_SEC = pair1.getFirst() / pair1.getSecond();
                 Double t_RC = chameleonTool.calRC(c1, cluster,pair1);
@@ -72,18 +98,14 @@ public class ThreadDealt2 implements Runnable{
                     if(temMess.getFlag() == false)
                         temMess.setFlag(true);
                 }
-
+                this.setOut_finished(true);
+                this.rwl.readLock().unlock();
 
             }
-            if(mustTwo >= 2){
-                this.setOut_finished(true);
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
+
+
             }
 
         }
-    }
 }

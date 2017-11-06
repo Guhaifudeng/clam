@@ -1,3 +1,5 @@
+package org.badou.cluster;
+
 import java.util.Comparator;
 
 /**

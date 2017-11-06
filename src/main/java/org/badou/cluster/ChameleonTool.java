@@ -1,3 +1,5 @@
+package org.badou.cluster;
+
 import fig.basic.Pair;
 
 import java.util.*;
@@ -9,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChameleonTool {
 
     private ConcurrentHashMap<Integer,HashMap<Integer,Double>> sparse_mat = null;
-    private Double miss_value = -1.0;
+    private Double miss_value = 0.0;
     private Double threshold = -1.0;//
     private Double alpha = 1.0;//closeness / relative
     public ChameleonTool(ConcurrentHashMap<Integer,HashMap<Integer,Double>> sparse_mat){
@@ -111,8 +113,19 @@ public class ChameleonTool {
     }
     //absolute closeness
     public Pair<Double,Integer> calSEC(ClusterBean cluster1, ClusterBean cluster2){
+//        ArrayList<Integer> points1 = new ArrayList <>();
+//        points1.addAll(cluster1.getPoints());
+//        ArrayList<Integer> points2 = new ArrayList <>();
+//        points2.addAll(cluster2.getPoints());
         ArrayList<Integer> points1 = cluster1.getPoints();
         ArrayList<Integer> points2 = cluster2.getPoints();
+        if(points1.size()==0)
+
+            System.err.println("data error 1");
+//            System.err.println(cluster1.);
+        if(points2.size()==0){
+            System.err.println("data error 2");
+        }
         Double sum_edge_weight = 0.0;
         int edge_num = 0;
         for(Integer point1:points1){

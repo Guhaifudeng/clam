@@ -1,6 +1,10 @@
+package org.badou.cluster;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class ThreadDealtNext implements Runnable{
@@ -9,9 +13,11 @@ public class ThreadDealtNext implements Runnable{
     private boolean in_finished = false;
     private ConcurrentLinkedQueue<ClusterPairBean> inN_queue = null;
     private HashMap<ClusterBean,ArrayList<ClusterPairBean>> c_f_map = null;
-    public ThreadDealtNext(ConcurrentLinkedQueue<ClusterPairBean> inN_queue, HashMap<ClusterBean,ArrayList<ClusterPairBean>> c_f_map){
+    private ReadWriteLock rwl = null;
+    public ThreadDealtNext(ConcurrentLinkedQueue<ClusterPairBean> inN_queue, HashMap<ClusterBean,ArrayList<ClusterPairBean>> c_f_map, ReentrantReadWriteLock rwl){
         this.inN_queue = inN_queue;
         this.in_finished = false;
+        this.rwl = rwl;
         this.c_f_map = c_f_map;
 
     }
@@ -22,10 +28,13 @@ public class ThreadDealtNext implements Runnable{
 
 
     public void run() {
+        this.rwl.readLock().lock();
         while (in_finished == false || !inN_queue.isEmpty()){
+
             ClusterPairBean clusterPairBean = inN_queue.poll();
             if(clusterPairBean ==null)
                 continue;
+//
             c1 = clusterPairBean.getC1();
             c2 = clusterPairBean.getC2();
             if(c_f_map.containsKey(c1)){
@@ -48,6 +57,6 @@ public class ThreadDealtNext implements Runnable{
             }
 
         }
-
+        this.rwl.readLock().unlock();
     }
 }

@@ -1,6 +1,10 @@
+package org.badou.cluster;
+
 import fig.basic.Pair;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by yishuihan on 17-7-29.
@@ -14,13 +18,15 @@ public class ThreadDealt implements Runnable{
     private ConcurrentLinkedQueue<Pair<ClusterBean,ClusterBean>> in_queue = null;
     private ChameleonTool chameleonTool = null;
     private Double minInitClusterPairRC = 0.4;
+    private ReadWriteLock rwl = null;
     public ThreadDealt(PriorityBlockingQueue<ClusterPairBean> out_queue, ConcurrentLinkedQueue<ClusterPairBean> out2_queue,
-                       ConcurrentLinkedQueue<Pair<ClusterBean,ClusterBean>> in_queue, ChameleonTool chameleonTool){
+                       ConcurrentLinkedQueue<Pair<ClusterBean,ClusterBean>> in_queue, ChameleonTool chameleonTool, ReentrantReadWriteLock rwl){
         this.out_queue = out_queue;
         this.out2_queue = out2_queue;
         this.in_queue = in_queue;
         this.chameleonTool = chameleonTool;
         this.in_finished = false;
+        this.rwl = rwl;
 
     }
     public void setIn_finished(boolean in_finished) {
@@ -33,10 +39,13 @@ public class ThreadDealt implements Runnable{
         this.minInitClusterPairRC = minInitClusterPairRC;
     }
     public void run() {
+        this.rwl.readLock().lock();
         while (in_finished == false || !in_queue.isEmpty()){
+
             Pair<ClusterBean,ClusterBean> pair = in_queue.poll();
             if(pair ==null)
                 continue;
+//
             c1 = pair.getFirst();
             c2 = pair.getSecond();
 
@@ -56,7 +65,9 @@ public class ThreadDealt implements Runnable{
                 out2_queue.add(tmp_pair);
                 out_queue.add(tmp_pair);
             }
+//
         }
+        this.rwl.readLock().unlock();
 
     }
 }
